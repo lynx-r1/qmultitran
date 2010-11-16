@@ -4,7 +4,10 @@
 #include <QMainWindow>
 #include <QUrl>
 
-QT_FORWARD_DECLARE_CLASS (QWebView)
+QT_FORWARD_DECLARE_CLASS(QCompleter)
+QT_FORWARD_DECLARE_CLASS(QProgressBar)
+QT_FORWARD_DECLARE_CLASS(QStringListModel)
+QT_FORWARD_DECLARE_CLASS(QWebView)
 
 namespace Ui {
     class MainWindow;
@@ -25,13 +28,18 @@ private slots:
     void parseTranslatePage(bool ok);
 
 private:
-
     QString cachePageName(const QString &filePath);
+    QStringList loadDict();
 
     Ui::MainWindow *ui;
 
     QWebView *mWebView;
     QUrl mTranslationUrl;
+    QProgressBar *mDownloadingProgress;
+
+    QCompleter *mCompleter;
+    QStringList mWordDictList;
+    QStringListModel *mWordDictModel;
 };
 
 #endif // MAINWINDOW_H

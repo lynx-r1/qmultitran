@@ -1,11 +1,18 @@
 #include <QDebug>
+
+#include <QCompleter>
+#include <QDir>
 #include <QDomDocument>
 #include <QFile>
 #include <QFileInfo>
 
 #include <QMessageBox>
+
 #include <QNetworkReply>
 #include <QNetworkRequest>
+
+#include <QProgressBar>
+#include <QStringListModel>
 
 #include <QWebView>
 #include <QWebFrame>
@@ -13,6 +20,9 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
+QString CACHE_DIR = QString("cache");
+QString MULTITRAN_URL = QString("http://multitran.ru/c/m.exe");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -23,7 +33,20 @@ MainWindow::MainWindow(QWidget *parent) :
     mWebView = new QWebView;
     ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
 
-    mTranslationUrl.setUrl ("http://multitran.ru/c/m.exe");
+    mTranslationUrl.setUrl (MULTITRAN_URL);
+
+    mDownloadingProgress = new QProgressBar;
+    mDownloadingProgress->setValue (0);
+    statusBar ()->addPermanentWidget (mDownloadingProgress);
+
+    mWordDictList = loadDict ();
+    mWordDictModel = new QStringListModel(mWordDictList);
+
+    mCompleter = new QCompleter(mWordDictModel, this);
+    mCompleter->setCaseSensitivity (Qt::CaseInsensitive);
+    mCompleter->setModelSorting (QCompleter::CaseSensitivelySortedModel);
+    mCompleter->setCompletionMode (QCompleter::InlineCompletion);
+    ui->lineEditTranslate->setCompleter (mCompleter);
 
     connect (mWebView, SIGNAL(loadProgress(int)),
              this, SLOT(downloadingTranslation(int)));
@@ -33,6 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    delete mWebView;
     delete ui;
 }
 
@@ -49,11 +73,7 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         query.append (qMakePair(QString("l1"), QString("1")));
         mTranslationUrl.setQueryItems (query);
 
-        QNetworkRequest request;
-        request.setUrl (mTranslationUrl);
-        request.setRawHeader ("User-Agent", "QMultitran 0.0.1");
-
-        mWebView->load (request);
+        mWebView->load (mTranslationUrl);
     } else {
         qDebug () << "load from cache";
         QFileInfo info(cacheFileName);
@@ -64,6 +84,7 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
 void MainWindow::downloadingTranslation (int progress)
 {
     qDebug () << progress;
+    mDownloadingProgress->setValue (progress);
 }
 
 void MainWindow::parseTranslatePage (bool ok)
@@ -90,6 +111,10 @@ void MainWindow::parseTranslatePage (bool ok)
             QTextStream out(&cacheFile);
             out.setCodec ("UTF-8");
             out << html;
+
+            mWordDictList.append (word);
+            mWordDictModel->setStringList (mWordDictList);
+            qDebug () << "Word saved in cache";
         } else {
             qDebug () << QString("Unable to open file %1 for writing").arg (filePath);
         }
@@ -101,5 +126,19 @@ void MainWindow::parseTranslatePage (bool ok)
 
 QString MainWindow::cachePageName (const QString &word)
 {
-    return QString("cache/").append (word).append (".html");
+    QString str = QString("%1/%2.html").arg (CACHE_DIR).arg (word);
+    return str;
+}
+
+QStringList MainWindow::loadDict ()
+{
+    QDir d(CACHE_DIR);
+    QStringList files = d.entryList (QStringList() << "*.html");
+    QStringList dict;
+    foreach (QString word, files) {
+        word.chop (5);
+        dict << word;
+    }
+
+    return dict;
 }
