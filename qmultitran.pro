@@ -19,3 +19,6 @@ FORMS    += mainwindow.ui
 
 RESOURCES += \
     qmultitran.qrc
+
+OTHER_FILES += \
+    qmultitran.conf

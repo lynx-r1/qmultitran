@@ -21,8 +21,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-QString CACHE_DIR = QString("cache");
-QString MULTITRAN_URL = QString("http://multitran.ru/c/m.exe");
 int MESSAGE_TIMEOUT = 4000;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -34,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mWebView = new QWebView;
     ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
 
-    mTranslationUrl.setUrl (MULTITRAN_URL);
+    mTranslationUrl.setUrl (MultitranUrl);
 
     mWordDictList = loadDict ();
     mWordDictModel = new QStringListModel(mWordDictList);
@@ -47,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->labelMultitranIcon->setPixmap (QPixmap(":/icons/multitran.png"));
 
+    readConfig ();
     createCacheDir ();
 
     connect (mWebView, SIGNAL(loadProgress(int)),
@@ -83,7 +82,7 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
 
 void MainWindow::on_actionClearCache_triggered ()
 {
-    QDir d(CACHE_DIR);
+    QDir d(CacheDir);
     QStringList files = d.entryList (QStringList() << "*.html");
     foreach (QString fileName, files) {
         d.remove (fileName);
@@ -147,23 +146,47 @@ void MainWindow::parseTranslationPage (bool ok)
     statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
 }
 
+void MainWindow::readConfig ()
+{
+    const QString configPath("qmultitran.conf");
+
+    if (QFile::exists (configPath)) {
+        QFile file(configPath);
+        if (file.open (QIODevice::ReadOnly | QIODevice::Text)) {
+            while (!file.atEnd ()) {
+                QByteArray line = file.readLine ();
+
+                QStringList list = QString(line).replace (QRegExp("[ \n\r]+"), "").split ("=");
+                if (list[0] == "CACHE_DIR")
+                    CacheDir = list[1];
+                else if (list[0] == "MULTITRAN_URL")
+                    MultitranUrl = list[1];
+            }
+        } else {
+            QMessageBox::critical (this, tr("Error"), tr("Unable to read config file!"));
+        }
+    } else {
+        QMessageBox::critical (this, tr("Error"), tr("There is no config file!"));
+    }
+}
+
 void MainWindow::createCacheDir ()
 {
-    if (!QFile::exists (CACHE_DIR)) {
+    if (!QFile::exists (CacheDir)) {
         QDir d = QDir::currentPath ();
-        d.mkdir (CACHE_DIR);
+        d.mkdir (CacheDir);
     }
 }
 
 QString MainWindow::cachePageName (const QString &word)
 {
-    QString str = QString("%1%2%3.html").arg (CACHE_DIR).arg (QDir::separator ()).arg (word);
+    QString str = QString("%1%2%3.html").arg (CacheDir).arg (QDir::separator ()).arg (word);
     return str;
 }
 
 QStringList MainWindow::loadDict ()
 {
-    QDir d(CACHE_DIR);
+    QDir d(CacheDir);
     QStringList files = d.entryList (QStringList() << "*.html");
     QStringList dict;
     foreach (QString word, files) {

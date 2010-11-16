@@ -31,6 +31,7 @@ private slots:
     void parseTranslationPage(bool ok);
 
 private:
+    void readConfig();
     void createCacheDir();
 
     QString cachePageName(const QString &filePath);
@@ -44,6 +45,9 @@ private:
     QCompleter *mCompleter;
     QStringList mWordDictList;
     QStringListModel *mWordDictModel;
+
+    QString CacheDir;
+    QString MultitranUrl;
 };
 
 #endif // MAINWINDOW_H
