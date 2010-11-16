@@ -23,6 +23,7 @@
 
 QString CACHE_DIR = QString("cache");
 QString MULTITRAN_URL = QString("http://multitran.ru/c/m.exe");
+int MESSAGE_TIMEOUT = 4000;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -35,10 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mTranslationUrl.setUrl (MULTITRAN_URL);
 
-    mDownloadingProgress = new QProgressBar;
-    mDownloadingProgress->setValue (0);
-    statusBar ()->addPermanentWidget (mDownloadingProgress);
-
     mWordDictList = loadDict ();
     mWordDictModel = new QStringListModel(mWordDictList);
 
@@ -48,10 +45,14 @@ MainWindow::MainWindow(QWidget *parent) :
     mCompleter->setCompletionMode (QCompleter::InlineCompletion);
     ui->lineEditTranslate->setCompleter (mCompleter);
 
+    ui->labelMultitranIcon->setPixmap (QPixmap(":/icons/multitran.png"));
+
+    createCacheDir ();
+
     connect (mWebView, SIGNAL(loadProgress(int)),
              this, SLOT(downloadingTranslation(int)));
     connect (mWebView, SIGNAL(loadFinished(bool)),
-             this, SLOT(parseTranslatePage(bool)));
+             this, SLOT(parseTranslationPage(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -65,29 +66,49 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
     QString word = ui->lineEditTranslate->text ();
     QString cacheFileName = cachePageName (word);
     if (!QFile::exists (cacheFileName)) {
-        qDebug () << "load from web";
-
         QList<QPair<QString, QString> > query;
         query.append (qMakePair(QString("CL"), QString("1")));
         query.append (qMakePair(QString("s"), ui->lineEditTranslate->text ()));
         query.append (qMakePair(QString("l1"), QString("1")));
         mTranslationUrl.setQueryItems (query);
 
+        statusBar ()->showMessage (tr("Loading from web..."));
         mWebView->load (mTranslationUrl);
     } else {
-        qDebug () << "load from cache";
         QFileInfo info(cacheFileName);
+        statusBar ()->showMessage (tr("Loading from cache..."));
         mWebView->load (info.absoluteFilePath ());
     }
 }
 
-void MainWindow::downloadingTranslation (int progress)
+void MainWindow::on_actionClearCache_triggered ()
 {
-    qDebug () << progress;
-    mDownloadingProgress->setValue (progress);
+    QDir d(CACHE_DIR);
+    QStringList files = d.entryList (QStringList() << "*.html");
+    foreach (QString fileName, files) {
+        d.remove (fileName);
+    }
+
+    statusBar ()->showMessage (tr("Cache cleaned"), MESSAGE_TIMEOUT);
 }
 
-void MainWindow::parseTranslatePage (bool ok)
+void MainWindow::on_actionAbout_triggered ()
+{
+    QString text = tr("This is a simple frontend for online version of dictionry Multitran.");
+    QMessageBox::about (this, tr("About"), text);
+}
+
+void MainWindow::on_actionExit_triggered ()
+{
+    qApp->quit ();
+}
+
+void MainWindow::downloadingTranslation (int progress)
+{
+    ui->progressBar->setValue (progress);
+}
+
+void MainWindow::parseTranslationPage (bool ok)
 {
     if (!ok) {
         qDebug () << "Unable to parse page";
@@ -122,11 +143,21 @@ void MainWindow::parseTranslatePage (bool ok)
         QFileInfo info(filePath);
         ui->webViewTranslation->setUrl (info.absoluteFilePath ());
     }
+
+    statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
+}
+
+void MainWindow::createCacheDir ()
+{
+    if (!QFile::exists (CACHE_DIR)) {
+        QDir d = QDir::currentPath ();
+        d.mkdir (CACHE_DIR);
+    }
 }
 
 QString MainWindow::cachePageName (const QString &word)
 {
-    QString str = QString("%1/%2.html").arg (CACHE_DIR).arg (word);
+    QString str = QString("%1%2%3.html").arg (CACHE_DIR).arg (QDir::separator ()).arg (word);
     return str;
 }
 

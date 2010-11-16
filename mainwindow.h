@@ -5,7 +5,6 @@
 #include <QUrl>
 
 QT_FORWARD_DECLARE_CLASS(QCompleter)
-QT_FORWARD_DECLARE_CLASS(QProgressBar)
 QT_FORWARD_DECLARE_CLASS(QStringListModel)
 QT_FORWARD_DECLARE_CLASS(QWebView)
 
@@ -24,10 +23,16 @@ public:
 private slots:
     void on_lineEditTranslate_returnPressed ();
 
+    void on_actionClearCache_triggered();
+    void on_actionAbout_triggered();
+    void on_actionExit_triggered();
+
     void downloadingTranslation(int);
-    void parseTranslatePage(bool ok);
+    void parseTranslationPage(bool ok);
 
 private:
+    void createCacheDir();
+
     QString cachePageName(const QString &filePath);
     QStringList loadDict();
 
@@ -35,7 +40,6 @@ private:
 
     QWebView *mWebView;
     QUrl mTranslationUrl;
-    QProgressBar *mDownloadingProgress;
 
     QCompleter *mCompleter;
     QStringList mWordDictList;

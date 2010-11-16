@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/multitran.png</file>
+        <file>icons/clear_cache.png</file>
+        <file>icons/help-about.png</file>
+        <file>icons/application-exit.png</file>
+    </qresource>
+</RCC>
