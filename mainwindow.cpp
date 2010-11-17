@@ -1,6 +1,7 @@
 #include <QDebug>
 
 #include <QCompleter>
+#include <QDesktopServices>
 #include <QDir>
 #include <QDomDocument>
 #include <QFile>
@@ -34,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mWebView = new QWebView;
     ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
+    ui->webViewTranslation->page ()->setLinkDelegationPolicy (QWebPage::DelegateAllLinks);
 
     mWordDictList = loadDict ();
     mWordDictModel = new QStringListModel(mWordDictList);
@@ -52,6 +54,13 @@ MainWindow::MainWindow(QWidget *parent) :
              this, SLOT(downloadingTranslation(int)));
     connect (mWebView, SIGNAL(loadFinished(bool)),
              this, SLOT(parseTranslationPage(bool)));
+    connect (ui->webViewTranslation, SIGNAL(linkClicked(QUrl)),
+             this, SLOT(handleLinkClick(QUrl)));
+
+    connect (ui->actionForward, SIGNAL(triggered()),
+             ui->webViewTranslation, SLOT(forward()));
+    connect (ui->actionBack, SIGNAL(triggered()),
+             ui->webViewTranslation, SLOT(back()));
 }
 
 MainWindow::~MainWindow()
@@ -81,16 +90,6 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
     }
 }
 
-void MainWindow::on_actionForward_triggered ()
-{
-
-}
-
-void MainWindow::on_actionBack_triggered ()
-{
-
-}
-
 void MainWindow::on_actionClearCache_triggered ()
 {
     QDir d(CacheDir);
@@ -111,6 +110,16 @@ void MainWindow::on_actionAbout_triggered ()
 void MainWindow::on_actionExit_triggered ()
 {
     qApp->quit ();
+}
+
+void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
+{
+    QString filePath = url.path ();
+
+    if (filePath != "blank") {
+        QString word = getWordFromPath (filePath);
+        ui->lineEditTranslate->setText (word);
+    }
 }
 
 void MainWindow::downloadingTranslation (int progress)
@@ -169,6 +178,29 @@ void MainWindow::parseTranslationPage (bool ok)
     statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
 }
 
+void MainWindow::handleLinkClick (const QUrl &url)
+{
+    QString clickedLink = url.toString ();
+    bool translation = clickedLink.contains (MultitranExeUrl + "?t=");
+
+    if (translation) {
+        QWebFrame *frame = ui->webViewTranslation->page ()->mainFrame ();
+        QWebElement document = frame->documentElement ();
+        QWebElementCollection links = document.findAll ("a");
+
+        foreach (QWebElement a, links) {
+            QString href = a.attribute ("href");
+            if (href == clickedLink) {
+                QString word = a.toInnerXml ();
+                ui->lineEditTranslate->setText (word);
+                on_lineEditTranslate_returnPressed ();
+            }
+        }
+    } else {
+        QDesktopServices::openUrl (url);
+    }
+}
+
 void MainWindow::readConfig ()
 {
     const QString configPath("qmultitran.conf");
@@ -177,9 +209,13 @@ void MainWindow::readConfig ()
         QFile file(configPath);
         if (file.open (QIODevice::ReadOnly | QIODevice::Text)) {
             while (!file.atEnd ()) {
-                QByteArray line = file.readLine ();
+                QByteArray l = file.readLine ();
+                QString line(l);
 
-                QStringList list = QString(line).replace (QRegExp("[ \n\r]+"), "").split ("=");
+                if (line[0] == '#')
+                    continue;
+
+                QStringList list = line.replace (QRegExp("[ \n\r]+"), "").split ("=");
                 if (list[0] == "CACHE_DIR")
                     CacheDir = list[1];
                 else if (list[0] == "MULTITRAN_URL")
@@ -214,10 +250,25 @@ QStringList MainWindow::loadDict ()
     QDir d(CacheDir);
     QStringList files = d.entryList (QStringList() << "*.html");
     QStringList dict;
-    foreach (QString word, files) {
-        word.chop (5);
-        dict << word;
+    foreach (QString file, files) {
+        dict << fileNameToWord (file);
     }
 
     return dict;
+}
+
+QString MainWindow::getWordFromPath (const QString &path)
+{
+    QFileInfo info(path);
+    QString fileName = info.fileName ();
+    QString word = fileNameToWord (fileName);
+
+    return word;
+}
+
+QString MainWindow::fileNameToWord (const QString &fileName)
+{
+    QString fn = fileName;
+    fn.chop (5);
+    return fn;
 }

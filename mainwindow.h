@@ -23,14 +23,16 @@ public:
 private slots:
     void on_lineEditTranslate_returnPressed ();
 
-    void on_actionForward_triggered();
-    void on_actionBack_triggered();
     void on_actionClearCache_triggered();
     void on_actionAbout_triggered();
     void on_actionExit_triggered();
 
+    void on_webViewTranslation_urlChanged(const QUrl &url);
+
     void downloadingTranslation(int);
     void parseTranslationPage(bool ok);
+
+    void handleLinkClick(const QUrl &url);
 
 private:
     void readConfig();
@@ -38,6 +40,9 @@ private:
 
     QString cachePageName(const QString &filePath);
     QStringList loadDict();
+
+    QString getWordFromPath(const QString &path);
+    QString fileNameToWord(const QString &fileName);
 
     Ui::MainWindow *ui;
 
