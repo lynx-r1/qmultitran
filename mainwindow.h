@@ -1,3 +1,21 @@
+/* Copyright (C) 2010 The QMultitran.
+ *
+ * This file is part of QMultitran.
+ *
+ * QMultitran is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * QMultitran is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with QMultitran.  If not, see <http://www.gnu.org/licenses/>.
+**/
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -23,19 +41,21 @@ public:
 private slots:
     void on_lineEditTranslate_returnPressed ();
 
+    void on_actionSettings_triggered();
     void on_actionClearCache_triggered();
     void on_actionAbout_triggered();
     void on_actionExit_triggered();
 
     void on_webViewTranslation_urlChanged(const QUrl &url);
 
-    void downloadingTranslation(int);
+    void loading(int);
     void parseTranslationPage(bool ok);
 
     void handleLinkClick(const QUrl &url);
 
 private:
-    void readConfig();
+    void readSettings();
+    void writeSettigns();
     void createCacheDir();
 
     QString cachePageName(const QString &filePath);
@@ -52,10 +72,6 @@ private:
     QCompleter *mCompleter;
     QStringList mWordDictList;
     QStringListModel *mWordDictModel;
-
-    QString CacheDir;
-    QString MultitranUrl;
-    QString MultitranExeUrl;
 };
 
 #endif // MAINWINDOW_H

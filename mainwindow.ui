@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>575</width>
-    <height>379</height>
+    <width>570</width>
+    <height>380</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>QMultitran</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="qmultitran.qrc">
+    <normaloff>:/icons/multitran.png</normaloff>:/icons/multitran.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -33,7 +37,10 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="qmultitran.qrc">:/icons/multitran.png</pixmap>
         </property>
        </widget>
       </item>
@@ -67,11 +74,13 @@
    <addaction name="actionBack"/>
    <addaction name="actionForward"/>
    <addaction name="separator"/>
+   <addaction name="actionSettings"/>
    <addaction name="actionClearCache"/>
    <addaction name="separator"/>
    <addaction name="actionAbout"/>
    <addaction name="separator"/>
    <addaction name="actionExit"/>
+   <addaction name="separator"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionClearCache">
@@ -123,6 +132,15 @@
    </property>
    <property name="text">
     <string>Forward</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="qmultitran.qrc">
+     <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>

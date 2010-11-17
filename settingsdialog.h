@@ -16,22 +16,35 @@
  * along with QMultitran.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <QtGui/QApplication>
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
-#include <QTextCodec>
+#include <QDialog>
 
-#include "mainwindow.h"
+QT_FORWARD_DECLARE_CLASS(QAbstractButton)
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-
-    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-    QTextCodec::setCodecForTr(codec);
-    QTextCodec::setCodecForCStrings(codec);
-
-    MainWindow w;
-    w.show();
-
-    return a.exec();
+namespace Ui {
+    class SettingsDialog;
 }
+
+class SettingsDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit SettingsDialog(QWidget *parent = 0);
+    ~SettingsDialog();
+
+private slots:
+    void on_buttonBox_clicked(QAbstractButton *button);
+    void on_checkBoxUseProxy_stateChanged(int state);
+
+    void apply();
+
+private:
+    void toggleProxyGui(bool toggle);
+
+    Ui::SettingsDialog *ui;
+};
+
+#endif // SETTINGSDIALOG_H

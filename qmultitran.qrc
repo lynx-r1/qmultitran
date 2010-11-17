@@ -6,5 +6,6 @@
         <file>icons/application-exit.png</file>
         <file>icons/forward.png</file>
         <file>icons/back.png</file>
+        <file>icons/settings.png</file>
     </qresource>
 </RCC>

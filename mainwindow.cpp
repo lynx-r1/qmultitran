@@ -1,19 +1,32 @@
-#include <QDebug>
+/* Copyright (C) 2010 The QMultitran.
+ *
+ * This file is part of QMultitran.
+ *
+ * QMultitran is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * QMultitran is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with QMultitran.  If not, see <http://www.gnu.org/licenses/>.
+**/
 
 #include <QCompleter>
 #include <QDesktopServices>
 #include <QDir>
-#include <QDomDocument>
 #include <QFile>
 #include <QFileInfo>
 
 #include <QMessageBox>
-
-#include <QNetworkReply>
-#include <QNetworkRequest>
-
+#include <QNetworkProxy>
 #include <QProgressBar>
 #include <QStringListModel>
+#include <QSettings>
 
 #include <QWebElement>
 #include <QWebFrame>
@@ -21,9 +34,14 @@
 #include <QWebView>
 
 #include "mainwindow.h"
+#include "settingsdialog.h"
 #include "ui_mainwindow.h"
 
-int MESSAGE_TIMEOUT = 4000;
+int MESSAGE_TIMEOUT = 3000;
+
+QString CACHE_DIR = "cache";
+QString MULTITRAN_URL = "http://multitran.ru";
+QString MULTITRAN_EXE = "http://multitran.ru/c/m.exe";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -31,11 +49,13 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    readConfig ();
     createCacheDir ();
+    readSettings ();
 
     mWebView = new QWebView;
+
     ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
+    ui->webViewTranslation->settings ()->setAttribute (QWebSettings::JavascriptEnabled, false);
     ui->webViewTranslation->page ()->setLinkDelegationPolicy (QWebPage::DelegateAllLinks);
 
     mWordDictList = loadDict ();
@@ -47,12 +67,10 @@ MainWindow::MainWindow(QWidget *parent) :
     mCompleter->setCompletionMode (QCompleter::InlineCompletion);
     ui->lineEditTranslate->setCompleter (mCompleter);
 
-    ui->labelMultitranIcon->setPixmap (QPixmap(":/icons/multitran.png"));
-
-    mTranslationUrl.setUrl (MultitranExeUrl);
+    mTranslationUrl.setUrl (MULTITRAN_EXE);
 
     connect (mWebView, SIGNAL(loadProgress(int)),
-             this, SLOT(downloadingTranslation(int)));
+             this, SLOT(loading(int)));
     connect (mWebView, SIGNAL(loadFinished(bool)),
              this, SLOT(parseTranslationPage(bool)));
     connect (ui->webViewTranslation, SIGNAL(linkClicked(QUrl)),
@@ -66,6 +84,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    writeSettigns ();
+
     delete mWebView;
     delete ui;
 }
@@ -81,7 +101,6 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         query.append (qMakePair(QString("l1"), QString("1")));
         mTranslationUrl.setQueryItems (query);
 
-        qDebug () << mTranslationUrl.toString ();
         statusBar ()->showMessage (tr("Loading from web..."));
         mWebView->load (mTranslationUrl);
     } else {
@@ -91,21 +110,36 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
     }
 }
 
+void MainWindow::on_actionSettings_triggered ()
+{
+    SettingsDialog settings;
+    settings.exec ();
+}
+
 void MainWindow::on_actionClearCache_triggered ()
 {
-    QDir d(CacheDir);
-    QStringList files = d.entryList (QStringList() << "*.html");
-    foreach (QString fileName, files) {
-        d.remove (fileName);
-    }
+    QMessageBox::StandardButton a = QMessageBox::question (this, tr("Warning"),
+                                                           tr("Are you really want to delete "
+                                                              "all localy saved words?"),
+                                                           QMessageBox::Yes | QMessageBox::No,
+                                                           QMessageBox::No);
+    if (a == QMessageBox::Yes) {
+        QDir d(CACHE_DIR);
+        QStringList files = d.entryList (QStringList() << "*.html");
+        foreach (QString fileName, files) {
+            d.remove (fileName);
+        }
 
-    statusBar ()->showMessage (tr("Cache cleaned"), MESSAGE_TIMEOUT);
+        statusBar ()->showMessage (tr("Cache cleaned"), MESSAGE_TIMEOUT);
+    } else {
+        statusBar ()->showMessage (tr("Canceled"), MESSAGE_TIMEOUT);
+    }
 }
 
 void MainWindow::on_actionAbout_triggered ()
 {
-    QString text = tr("This is a simple frontend for online version"
-                      "of dictionry Multitran.");
+    QString text = tr("This program is a simple frontend for online version "
+                      "of the dictionary Multitran (http://multitran.ru).");
     QMessageBox::about (this, tr("About"), text);
 }
 
@@ -133,7 +167,7 @@ void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
     }
 }
 
-void MainWindow::downloadingTranslation (int progress)
+void MainWindow::loading (int progress)
 {
     ui->progressBar->setValue (progress);
 }
@@ -141,7 +175,7 @@ void MainWindow::downloadingTranslation (int progress)
 void MainWindow::parseTranslationPage (bool ok)
 {
     if (!ok) {
-        qDebug () << "Unable to parse page";
+        QMessageBox::information (this, tr("Error"), tr("Unable to load page"));
         return;
     }
 
@@ -159,13 +193,13 @@ void MainWindow::parseTranslationPage (bool ok)
         foreach (QWebElement i, imgs) {
             QString imgVal = i.attribute ("src");
             if (!imgVal.isEmpty ()) {
-                i.setAttribute ("src", QString("%1/%2").arg (MultitranUrl)
+                i.setAttribute ("src", QString("%1/%2").arg (MULTITRAN_URL)
                                 .arg (imgVal));
             }
         }
 
         QString tablesXml = translateTable.toOuterXml ();
-        tablesXml.replace ("m.exe", MultitranExeUrl);
+        tablesXml.replace ("m.exe", MULTITRAN_EXE);
 
         ui->webViewTranslation->setHtml (tablesXml);
 
@@ -178,9 +212,10 @@ void MainWindow::parseTranslationPage (bool ok)
 
             mWordDictList.append (word);
             mWordDictModel->setStringList (mWordDictList);
-            qDebug () << "Word saved in cache";
+            statusBar ()->showMessage (tr("Word saved in cache"));
         } else {
-            qDebug () << QString("Unable to open file %1 for writing").arg (filePath);
+            QMessageBox::information (this, tr("Error"), tr("Unable to open file %1 for writing")
+                                      .arg (filePath));
         }
     } else {
         QFileInfo info(filePath);
@@ -193,7 +228,7 @@ void MainWindow::parseTranslationPage (bool ok)
 void MainWindow::handleLinkClick (const QUrl &url)
 {
     QString clickedLink = url.toString ();
-    bool bTranslation = clickedLink.contains (MultitranExeUrl + "?t=");
+    bool bTranslation = clickedLink.contains (MULTITRAN_EXE + "?t=");
 
     if (bTranslation) {
         QWebFrame *frame = ui->webViewTranslation->page ()->mainFrame ();
@@ -213,57 +248,56 @@ void MainWindow::handleLinkClick (const QUrl &url)
     }
 }
 
-void MainWindow::readConfig ()
+void MainWindow::readSettings ()
 {
-    const QString configPath("qmultitran.conf");
+    QSettings s;
 
-    if (QFile::exists (configPath)) {
-        QFile file(configPath);
-        if (file.open (QIODevice::ReadOnly | QIODevice::Text)) {
-            while (!file.atEnd ()) {
-                QByteArray l = file.readLine ();
-                QString line(l);
+    bool bUseProxy = s.value ("QMultitran/UseProxy", false).toBool ();
 
-                if (line[0] == '#')
-                    continue;
+    if (bUseProxy) {
+        QString hostName = s.value ("/QMultitran/ProxyHost").toString ();
+        int port = s.value ("/QMultitran/ProxyPort").toInt ();
+        QString userName = s.value ("/QMultitran/UserName").toString ();
+        QString password = s.value ("/QMultitran/Password").toString ();
 
-                QStringList list = line.replace (QRegExp("[ \n\r]+"), "")
-                                   .split ("=");
-                if (list[0] == "CACHE_DIR")
-                    CacheDir = list[1];
-                else if (list[0] == "MULTITRAN_URL")
-                    MultitranUrl = list[1];
-                else if (list[0] == "MULTITRAN_EXE_URL")
-                    MultitranExeUrl = list[1];
-            }
-        } else {
-            QMessageBox::information (this, tr("Error"),
-                                      tr("Unable to read config file!"));
+        QNetworkProxy proxy(QNetworkProxy::HttpProxy, hostName, port);
+
+        bool bUseAuthentication = s.value ("/QMultitran/UseAuthentication", false).toBool ();
+        if (bUseAuthentication) {
+            proxy.setUser (userName);
+            proxy.setPassword (password);
         }
-    } else {
-        QMessageBox::information (this, tr("Error"),
-                                  tr("There is no config file!"));
+
+        QNetworkProxy::setApplicationProxy(proxy);
     }
+
+    setGeometry (s.value ("/QMultitran/Geometry", QRect(0, 0, 570, 380)).toRect ());
+}
+
+void MainWindow::writeSettigns ()
+{
+    QSettings s;
+    s.setValue ("/QMultitran/Geometry", geometry ());
 }
 
 void MainWindow::createCacheDir ()
 {
-    if (!QFile::exists (CacheDir)) {
+    if (!QFile::exists (CACHE_DIR)) {
         QDir d = QDir::currentPath ();
-        d.mkdir (CacheDir);
+        d.mkdir (CACHE_DIR);
     }
 }
 
 QString MainWindow::cachePageName (const QString &word)
 {
-    QString str = QString("%1%2%3.html").arg (CacheDir)
+    QString str = QString("%1%2%3.html").arg (CACHE_DIR)
                   .arg (QDir::separator ()).arg (word);
     return str;
 }
 
 QStringList MainWindow::loadDict ()
 {
-    QDir d(CacheDir);
+    QDir d(CACHE_DIR);
     QStringList files = d.entryList (QStringList() << "*.html");
     QStringList dict;
     foreach (QString file, files) {
