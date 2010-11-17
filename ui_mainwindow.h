@@ -34,6 +34,8 @@ public:
     QAction *actionClearCache;
     QAction *actionExit;
     QAction *actionAbout;
+    QAction *actionBack;
+    QAction *actionForward;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     QHBoxLayout *horizontalLayout;
@@ -64,6 +66,16 @@ public:
         QIcon icon2;
         icon2.addFile(QString::fromUtf8(":/icons/help-about.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionAbout->setIcon(icon2);
+        actionBack = new QAction(MainWindow);
+        actionBack->setObjectName(QString::fromUtf8("actionBack"));
+        QIcon icon3;
+        icon3.addFile(QString::fromUtf8(":/icons/back.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionBack->setIcon(icon3);
+        actionForward = new QAction(MainWindow);
+        actionForward->setObjectName(QString::fromUtf8("actionForward"));
+        QIcon icon4;
+        icon4.addFile(QString::fromUtf8(":/icons/forward.png"), QSize(), QIcon::Normal, QIcon::Off);
+        actionForward->setIcon(icon4);
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -112,6 +124,9 @@ public:
         statusBar->setObjectName(QString::fromUtf8("statusBar"));
         MainWindow->setStatusBar(statusBar);
 
+        mainToolBar->addAction(actionBack);
+        mainToolBar->addAction(actionForward);
+        mainToolBar->addSeparator();
         mainToolBar->addAction(actionClearCache);
         mainToolBar->addSeparator();
         mainToolBar->addAction(actionAbout);
@@ -129,6 +144,8 @@ public:
         actionClearCache->setText(QApplication::translate("MainWindow", "Clear cache", 0, QApplication::UnicodeUTF8));
         actionExit->setText(QApplication::translate("MainWindow", "Exit", 0, QApplication::UnicodeUTF8));
         actionAbout->setText(QApplication::translate("MainWindow", "About", 0, QApplication::UnicodeUTF8));
+        actionBack->setText(QApplication::translate("MainWindow", "Back", 0, QApplication::UnicodeUTF8));
+        actionForward->setText(QApplication::translate("MainWindow", "Forward", 0, QApplication::UnicodeUTF8));
 //        lineEditTranslate->setPlaceholderText(QApplication::translate("MainWindow", "Translate", 0, QApplication::UnicodeUTF8));
         labelMultitranIcon->setText(QApplication::translate("MainWindow", "TextLabel", 0, QApplication::UnicodeUTF8));
     } // retranslateUi

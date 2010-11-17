@@ -23,6 +23,8 @@ public:
 private slots:
     void on_lineEditTranslate_returnPressed ();
 
+    void on_actionForward_triggered();
+    void on_actionBack_triggered();
     void on_actionClearCache_triggered();
     void on_actionAbout_triggered();
     void on_actionExit_triggered();
@@ -48,6 +50,7 @@ private:
 
     QString CacheDir;
     QString MultitranUrl;
+    QString MultitranExeUrl;
 };
 
 #endif // MAINWINDOW_H

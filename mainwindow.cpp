@@ -29,10 +29,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    readConfig ();
+    createCacheDir ();
+
     mWebView = new QWebView;
     ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
-
-    mTranslationUrl.setUrl (MultitranUrl);
 
     mWordDictList = loadDict ();
     mWordDictModel = new QStringListModel(mWordDictList);
@@ -45,8 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->labelMultitranIcon->setPixmap (QPixmap(":/icons/multitran.png"));
 
-    readConfig ();
-    createCacheDir ();
+    mTranslationUrl.setUrl (MultitranExeUrl);
 
     connect (mWebView, SIGNAL(loadProgress(int)),
              this, SLOT(downloadingTranslation(int)));
@@ -71,6 +71,7 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         query.append (qMakePair(QString("l1"), QString("1")));
         mTranslationUrl.setQueryItems (query);
 
+        qDebug () << mTranslationUrl.toString ();
         statusBar ()->showMessage (tr("Loading from web..."));
         mWebView->load (mTranslationUrl);
     } else {
@@ -78,6 +79,16 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         statusBar ()->showMessage (tr("Loading from cache..."));
         mWebView->load (info.absoluteFilePath ());
     }
+}
+
+void MainWindow::on_actionForward_triggered ()
+{
+
+}
+
+void MainWindow::on_actionBack_triggered ()
+{
+
 }
 
 void MainWindow::on_actionClearCache_triggered ()
@@ -123,7 +134,19 @@ void MainWindow::parseTranslationPage (bool ok)
         QWebElement document = frame->documentElement ();
         QWebElementCollection tables = document.findAll ("table");
 
-        ui->webViewTranslation->setHtml (tables.at (TranslationTable).toOuterXml ());
+        QWebElement translateTable = tables.at (TranslationTable);
+        QWebElementCollection imgs = translateTable.findAll ("img");
+        foreach (QWebElement i, imgs) {
+            QString imgVal = i.attribute ("src");
+            if (!imgVal.isEmpty ()) {
+                i.setAttribute ("src", QString("%1/%2").arg (MultitranUrl).arg (imgVal));
+            }
+        }
+
+        QString tablesXml = translateTable.toOuterXml ();
+        tablesXml.replace ("m.exe", MultitranExeUrl);
+
+        ui->webViewTranslation->setHtml (tablesXml);
 
         QFile cacheFile(filePath);
         if (cacheFile.open (QIODevice::WriteOnly)) {
@@ -161,12 +184,14 @@ void MainWindow::readConfig ()
                     CacheDir = list[1];
                 else if (list[0] == "MULTITRAN_URL")
                     MultitranUrl = list[1];
+                else if (list[0] == "MULTITRAN_EXE_URL")
+                    MultitranExeUrl = list[1];
             }
         } else {
-            QMessageBox::critical (this, tr("Error"), tr("Unable to read config file!"));
+            QMessageBox::information (this, tr("Error"), tr("Unable to read config file!"));
         }
     } else {
-        QMessageBox::critical (this, tr("Error"), tr("There is no config file!"));
+        QMessageBox::information (this, tr("Error"), tr("There is no config file!"));
     }
 }
 
