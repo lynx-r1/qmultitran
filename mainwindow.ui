@@ -102,6 +102,9 @@
    </property>
   </action>
   <action name="actionBack">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qmultitran.qrc">
      <normaloff>:/icons/back.png</normaloff>:/icons/back.png</iconset>
@@ -111,6 +114,9 @@
    </property>
   </action>
   <action name="actionForward">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="qmultitran.qrc">
      <normaloff>:/icons/forward.png</normaloff>:/icons/forward.png</iconset>

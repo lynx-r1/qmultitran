@@ -68,11 +68,13 @@ public:
         actionAbout->setIcon(icon2);
         actionBack = new QAction(MainWindow);
         actionBack->setObjectName(QString::fromUtf8("actionBack"));
+        actionBack->setEnabled(false);
         QIcon icon3;
         icon3.addFile(QString::fromUtf8(":/icons/back.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionBack->setIcon(icon3);
         actionForward = new QAction(MainWindow);
         actionForward->setObjectName(QString::fromUtf8("actionForward"));
+        actionForward->setEnabled(false);
         QIcon icon4;
         icon4.addFile(QString::fromUtf8(":/icons/forward.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionForward->setIcon(icon4);

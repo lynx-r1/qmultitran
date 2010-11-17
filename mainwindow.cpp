@@ -15,9 +15,10 @@
 #include <QProgressBar>
 #include <QStringListModel>
 
-#include <QWebView>
-#include <QWebFrame>
 #include <QWebElement>
+#include <QWebFrame>
+#include <QWebHistory>
+#include <QWebView>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -103,7 +104,8 @@ void MainWindow::on_actionClearCache_triggered ()
 
 void MainWindow::on_actionAbout_triggered ()
 {
-    QString text = tr("This is a simple frontend for online version of dictionry Multitran.");
+    QString text = tr("This is a simple frontend for online version"
+                      "of dictionry Multitran.");
     QMessageBox::about (this, tr("About"), text);
 }
 
@@ -114,6 +116,15 @@ void MainWindow::on_actionExit_triggered ()
 
 void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
 {
+    QWebHistory *hist = ui->webViewTranslation->history ();
+
+    int iMaxItems = 100;
+    bool bAllowBack = (hist->backItems (iMaxItems).count() != 0);
+    ui->actionBack->setEnabled (bAllowBack);
+
+    bool bAllowForward = (hist->forwardItems (iMaxItems).count() != 0);
+    ui->actionForward->setEnabled (bAllowForward);
+
     QString filePath = url.path ();
 
     if (filePath != "blank") {
@@ -148,7 +159,8 @@ void MainWindow::parseTranslationPage (bool ok)
         foreach (QWebElement i, imgs) {
             QString imgVal = i.attribute ("src");
             if (!imgVal.isEmpty ()) {
-                i.setAttribute ("src", QString("%1/%2").arg (MultitranUrl).arg (imgVal));
+                i.setAttribute ("src", QString("%1/%2").arg (MultitranUrl)
+                                .arg (imgVal));
             }
         }
 
@@ -181,9 +193,9 @@ void MainWindow::parseTranslationPage (bool ok)
 void MainWindow::handleLinkClick (const QUrl &url)
 {
     QString clickedLink = url.toString ();
-    bool translation = clickedLink.contains (MultitranExeUrl + "?t=");
+    bool bTranslation = clickedLink.contains (MultitranExeUrl + "?t=");
 
-    if (translation) {
+    if (bTranslation) {
         QWebFrame *frame = ui->webViewTranslation->page ()->mainFrame ();
         QWebElement document = frame->documentElement ();
         QWebElementCollection links = document.findAll ("a");
@@ -215,7 +227,8 @@ void MainWindow::readConfig ()
                 if (line[0] == '#')
                     continue;
 
-                QStringList list = line.replace (QRegExp("[ \n\r]+"), "").split ("=");
+                QStringList list = line.replace (QRegExp("[ \n\r]+"), "")
+                                   .split ("=");
                 if (list[0] == "CACHE_DIR")
                     CacheDir = list[1];
                 else if (list[0] == "MULTITRAN_URL")
@@ -224,10 +237,12 @@ void MainWindow::readConfig ()
                     MultitranExeUrl = list[1];
             }
         } else {
-            QMessageBox::information (this, tr("Error"), tr("Unable to read config file!"));
+            QMessageBox::information (this, tr("Error"),
+                                      tr("Unable to read config file!"));
         }
     } else {
-        QMessageBox::information (this, tr("Error"), tr("There is no config file!"));
+        QMessageBox::information (this, tr("Error"),
+                                  tr("There is no config file!"));
     }
 }
 
@@ -241,7 +256,8 @@ void MainWindow::createCacheDir ()
 
 QString MainWindow::cachePageName (const QString &word)
 {
-    QString str = QString("%1%2%3.html").arg (CacheDir).arg (QDir::separator ()).arg (word);
+    QString str = QString("%1%2%3.html").arg (CacheDir)
+                  .arg (QDir::separator ()).arg (word);
     return str;
 }
 
