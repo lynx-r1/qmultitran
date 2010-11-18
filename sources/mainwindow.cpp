@@ -17,16 +17,19 @@
 **/
 
 #include <QCompleter>
+#include <QCloseEvent>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 
+#include <QMenu>
 #include <QMessageBox>
 #include <QNetworkProxy>
 #include <QProgressBar>
 #include <QStringListModel>
 #include <QSettings>
+#include <QSystemTrayIcon>
 
 #include <QWebElement>
 #include <QWebFrame>
@@ -49,37 +52,19 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    createCacheDir ();
-    readSettings ();
-
     mWebView = new QWebView;
-
-    ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
-    ui->webViewTranslation->settings ()->setAttribute (QWebSettings::JavascriptEnabled, false);
-    ui->webViewTranslation->page ()->setLinkDelegationPolicy (QWebPage::DelegateAllLinks);
-
-    mWordDictList = loadDict ();
-    mWordDictModel = new QStringListModel(mWordDictList);
-
-    mCompleter = new QCompleter(mWordDictModel, this);
-    mCompleter->setCaseSensitivity (Qt::CaseInsensitive);
-    mCompleter->setModelSorting (QCompleter::CaseSensitivelySortedModel);
-    mCompleter->setCompletionMode (QCompleter::InlineCompletion);
-    ui->lineEditTranslate->setCompleter (mCompleter);
-
     mTranslationUrl.setUrl (MULTITRAN_EXE);
 
-    connect (mWebView, SIGNAL(loadProgress(int)),
-             this, SLOT(loading(int)));
-    connect (mWebView, SIGNAL(loadFinished(bool)),
-             this, SLOT(parseTranslationPage(bool)));
-    connect (ui->webViewTranslation, SIGNAL(linkClicked(QUrl)),
-             this, SLOT(handleLinkClick(QUrl)));
+    configWebViewTranslation ();
 
-    connect (ui->actionForward, SIGNAL(triggered()),
-             ui->webViewTranslation, SLOT(forward()));
-    connect (ui->actionBack, SIGNAL(triggered()),
-             ui->webViewTranslation, SLOT(back()));
+    createWordDictModel ();
+    createCompleter ();
+    createTrayIcon ();
+
+    createCacheDir ();
+
+    createConnections ();
+    readSettings ();
 }
 
 MainWindow::~MainWindow()
@@ -90,6 +75,16 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// ----------------------------- public slots ------------------------------- //
+void MainWindow::closeEvent (QCloseEvent *event)
+{
+    if (mTrayIcon->isVisible ()) {
+        hide();
+        event->ignore();
+    }
+}
+
+// --------------------------- private slots -------------------------------- //
 void MainWindow::on_lineEditTranslate_returnPressed ()
 {
     QString word = ui->lineEditTranslate->text ();
@@ -107,6 +102,13 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         QFileInfo info(cacheFileName);
         statusBar ()->showMessage (tr("Loading from cache..."));
         mWebView->load (info.absoluteFilePath ());
+    }
+}
+
+void MainWindow::on_actionCheckUpdate_triggered ()
+{
+    if (checkUpdate ()) {
+        mTrayIcon->showMessage (tr("Update"), tr("Available new version."));
     }
 }
 
@@ -139,7 +141,8 @@ void MainWindow::on_actionClearCache_triggered ()
 void MainWindow::on_actionAbout_triggered ()
 {
     QString text = tr("This program is a simple frontend for online version "
-                      "of the dictionary Multitran (http://multitran.ru).");
+                      "of the dictionary Multitran (<a href='http://multitran.ru'>"
+                      "http://multitran.ru</a>).");
     QMessageBox::about (this, tr("About"), text);
 }
 
@@ -150,13 +153,15 @@ void MainWindow::on_actionExit_triggered ()
 
 void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
 {
-    QWebHistory *hist = ui->webViewTranslation->history ();
+    qDebug () << url;
+    QWebHistory *history = ui->webViewTranslation->history ();
+    qDebug () << history->items ().count ();
 
     int iMaxItems = 100;
-    bool bAllowBack = (hist->backItems (iMaxItems).count() != 0);
+    bool bAllowBack = (history->backItems (iMaxItems).count() != 0);
     ui->actionBack->setEnabled (bAllowBack);
 
-    bool bAllowForward = (hist->forwardItems (iMaxItems).count() != 0);
+    bool bAllowForward = (history->forwardItems (iMaxItems).count() != 0);
     ui->actionForward->setEnabled (bAllowForward);
 
     QString filePath = url.path ();
@@ -167,65 +172,7 @@ void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
     }
 }
 
-void MainWindow::loading (int progress)
-{
-    ui->progressBar->setValue (progress);
-}
-
-void MainWindow::parseTranslationPage (bool ok)
-{
-    if (!ok) {
-        QMessageBox::information (this, tr("Error"), tr("Unable to load page"));
-        return;
-    }
-
-    QString word = ui->lineEditTranslate->text ();
-    QString filePath(cachePageName (word));
-    if (!QFile::exists (filePath)) {
-        const int TranslationTable = 6;
-
-        QWebFrame *frame = mWebView->page ()->mainFrame ();
-        QWebElement document = frame->documentElement ();
-        QWebElementCollection tables = document.findAll ("table");
-
-        QWebElement translateTable = tables.at (TranslationTable);
-        QWebElementCollection imgs = translateTable.findAll ("img");
-        foreach (QWebElement i, imgs) {
-            QString imgVal = i.attribute ("src");
-            if (!imgVal.isEmpty ()) {
-                i.setAttribute ("src", QString("%1/%2").arg (MULTITRAN_URL)
-                                .arg (imgVal));
-            }
-        }
-
-        QString tablesXml = translateTable.toOuterXml ();
-        tablesXml.replace ("m.exe", MULTITRAN_EXE);
-
-        ui->webViewTranslation->setHtml (tablesXml);
-
-        QFile cacheFile(filePath);
-        if (cacheFile.open (QIODevice::WriteOnly)) {
-            QString html = ui->webViewTranslation->page ()->mainFrame ()->toHtml ();
-            QTextStream out(&cacheFile);
-            out.setCodec ("UTF-8");
-            out << html;
-
-            mWordDictList.append (word);
-            mWordDictModel->setStringList (mWordDictList);
-            statusBar ()->showMessage (tr("Word saved in cache"));
-        } else {
-            QMessageBox::information (this, tr("Error"), tr("Unable to open file %1 for writing")
-                                      .arg (filePath));
-        }
-    } else {
-        QFileInfo info(filePath);
-        ui->webViewTranslation->setUrl (info.absoluteFilePath ());
-    }
-
-    statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
-}
-
-void MainWindow::handleLinkClick (const QUrl &url)
+void MainWindow::on_webViewTranslation_linkClicked (const QUrl &url)
 {
     QString clickedLink = url.toString ();
     bool bTranslation = clickedLink.contains (MULTITRAN_EXE + "?t=");
@@ -248,6 +195,83 @@ void MainWindow::handleLinkClick (const QUrl &url)
     }
 }
 
+void MainWindow::loading (int progress)
+{
+    ui->progressBar->setValue (progress);
+}
+
+void MainWindow::iconActivated (QSystemTrayIcon::ActivationReason reason)
+{
+    switch (reason) {
+    case QSystemTrayIcon::Trigger:
+    case QSystemTrayIcon::DoubleClick:
+        setVisible (!isVisible ());
+        break;
+    default:
+        ;
+    }
+}
+
+void MainWindow::iconMessageClicked ()
+{
+    QMessageBox::information (this, "hi", "hoy");
+}
+
+void MainWindow::parseTranslationPage (bool ok)
+{
+    if (!ok) {
+        QMessageBox::information (this, tr("Error"), tr("Unable to load page"));
+        statusBar ()->clearMessage ();
+        return;
+    }
+
+    QString word = ui->lineEditTranslate->text ();
+    QString filePath(cachePageName (word));
+    if (!QFile::exists (filePath)) {
+        const int TranslationTable = 6;
+
+        QWebFrame *frame = mWebView->page ()->mainFrame ();
+        QWebElement document = frame->documentElement ();
+        QWebElementCollection tables = document.findAll ("table");
+
+        QWebElement translateTable = tables.at (TranslationTable);
+        QWebElementCollection imgs = translateTable.findAll ("img");
+        foreach (QWebElement i, imgs) {
+            QString imgVal = i.attribute ("src");
+            if (!imgVal.isEmpty ()) {
+                i.setAttribute ("src", QString("%1/%2").arg (MULTITRAN_URL)
+                                .arg (imgVal));
+            }
+        }
+
+        QString tableXml = translateTable.toOuterXml ();
+        tableXml.replace ("m.exe", MULTITRAN_EXE);
+
+        QFile cacheFile(filePath);
+        if (cacheFile.open (QIODevice::WriteOnly)) {
+            QString html = QString("<html><head></head><body>%1"
+                                   "</body></html>").arg (tableXml);
+            QTextStream out(&cacheFile);
+            out.setCodec ("UTF-8");
+            out << html;
+
+            mWordDictList.append (word);
+            mWordDictModel->setStringList (mWordDictList);
+            statusBar ()->showMessage (tr("Word saved in cache"));
+        } else {
+            QMessageBox::information (this, tr("Error"), tr("Unable to open file %1 for writing")
+                                      .arg (filePath));
+            return;
+        }
+    }
+
+    QFileInfo info(filePath);
+    ui->webViewTranslation->setUrl (info.absoluteFilePath ());
+
+    statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
+}
+
+// ------------------------------ private ---------------------------------- //
 void MainWindow::readSettings ()
 {
     QSettings s;
@@ -280,12 +304,70 @@ void MainWindow::writeSettigns ()
     s.setValue ("/QMultitran/Geometry", geometry ());
 }
 
+void MainWindow::configWebViewTranslation ()
+{
+    ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
+    ui->webViewTranslation->settings ()->setAttribute (QWebSettings::JavascriptEnabled, false);
+    ui->webViewTranslation->page ()->setLinkDelegationPolicy (QWebPage::DelegateAllLinks);
+}
+
+void MainWindow::createWordDictModel ()
+{
+    mWordDictList = loadDict ();
+    mWordDictModel = new QStringListModel(mWordDictList);
+}
+
+void MainWindow::createCompleter ()
+{
+    QCompleter *completer = new QCompleter(mWordDictModel, this);
+    completer->setCaseSensitivity (Qt::CaseInsensitive);
+    completer->setModelSorting (QCompleter::CaseSensitivelySortedModel);
+    completer->setCompletionMode (QCompleter::InlineCompletion);
+    ui->lineEditTranslate->setCompleter (completer);
+}
+
+void MainWindow::createTrayIcon ()
+{
+    QMenu *trayIconMenu = new QMenu(this);
+    trayIconMenu->addAction(ui->actionCheckUpdate);
+    trayIconMenu->addAction(ui->actionAbout);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(ui->actionExit);
+
+    mTrayIcon = new QSystemTrayIcon(QPixmap(":/icons/multitran_logo.png"), this);
+    mTrayIcon->setContextMenu(trayIconMenu);
+    mTrayIcon->show ();
+}
+
+void MainWindow::createConnections ()
+{
+    connect (mWebView, SIGNAL(loadProgress(int)),
+             this, SLOT(loading(int)));
+    connect (mWebView, SIGNAL(loadFinished(bool)),
+             this, SLOT(parseTranslationPage(bool)));
+
+    connect (mTrayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
+             this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
+    connect (mTrayIcon, SIGNAL(messageClicked()),
+             this, SLOT(iconMessageClicked()));
+
+    connect (ui->actionForward, SIGNAL(triggered()),
+             ui->webViewTranslation, SLOT(forward()));
+    connect (ui->actionBack, SIGNAL(triggered()),
+             ui->webViewTranslation, SLOT(back()));
+}
+
 void MainWindow::createCacheDir ()
 {
     if (!QFile::exists (CACHE_DIR)) {
         QDir d = QDir::currentPath ();
         d.mkdir (CACHE_DIR);
     }
+}
+
+bool MainWindow::checkUpdate ()
+{
+    return true;
 }
 
 QString MainWindow::cachePageName (const QString &word)

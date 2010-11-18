@@ -17,6 +17,8 @@
 **/
 
 #include <QtGui/QApplication>
+#include <QtGui/QSystemTrayIcon>
+#include <QtGui/QMessageBox>
 
 #include <QTextCodec>
 
@@ -29,6 +31,14 @@ int main(int argc, char *argv[])
     QTextCodec *codec = QTextCodec::codecForName("UTF-8");
     QTextCodec::setCodecForTr(codec);
     QTextCodec::setCodecForCStrings(codec);
+
+    if (QSystemTrayIcon::isSystemTrayAvailable()) {
+        QApplication::setQuitOnLastWindowClosed(false);
+    } else {
+        QMessageBox::critical(0, QObject::tr("Systray"),
+                              QObject::tr("I couldn't detect any system tray "
+                                          "on this system."));
+    }
 
     MainWindow w;
     w.show();

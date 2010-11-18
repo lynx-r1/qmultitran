@@ -20,9 +20,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSystemTrayIcon>
 #include <QUrl>
 
-QT_FORWARD_DECLARE_CLASS(QCompleter)
 QT_FORWARD_DECLARE_CLASS(QStringListModel)
 QT_FORWARD_DECLARE_CLASS(QWebView)
 
@@ -38,25 +38,40 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+public slots:
+    void closeEvent (QCloseEvent *);
+
 private slots:
     void on_lineEditTranslate_returnPressed ();
 
+    void on_actionCheckUpdate_triggered();
     void on_actionSettings_triggered();
     void on_actionClearCache_triggered();
     void on_actionAbout_triggered();
     void on_actionExit_triggered();
 
     void on_webViewTranslation_urlChanged(const QUrl &url);
+    void on_webViewTranslation_linkClicked(const QUrl &url);
+
+    void iconActivated(QSystemTrayIcon::ActivationReason reason);
+    void iconMessageClicked();
 
     void loading(int);
     void parseTranslationPage(bool ok);
 
-    void handleLinkClick(const QUrl &url);
-
 private:
     void readSettings();
     void writeSettigns();
+
+    void configWebViewTranslation();
+
+    void createWordDictModel();
+    void createCompleter();
+    void createTrayIcon();
+    void createConnections();
     void createCacheDir();
+
+    bool checkUpdate();
 
     QString cachePageName(const QString &filePath);
     QStringList loadDict();
@@ -64,14 +79,16 @@ private:
     QString getWordFromPath(const QString &path);
     QString fileNameToWord(const QString &fileName);
 
+
     Ui::MainWindow *ui;
 
     QWebView *mWebView;
-    QUrl mTranslationUrl;
 
-    QCompleter *mCompleter;
-    QStringList mWordDictList;
     QStringListModel *mWordDictModel;
+    QSystemTrayIcon *mTrayIcon;
+
+    QUrl mTranslationUrl;
+    QStringList mWordDictList;
 };
 
 #endif // MAINWINDOW_H

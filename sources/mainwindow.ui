@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="qmultitran.qrc">
-    <normaloff>:/icons/multitran.png</normaloff>:/icons/multitran.png</iconset>
+    <normaloff>:/icons/multitran_logo.png</normaloff>:/icons/multitran_logo.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -141,6 +141,15 @@
    </property>
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionCheckUpdate">
+   <property name="icon">
+    <iconset resource="qmultitran.qrc">
+     <normaloff>:/icons/update.png</normaloff>:/icons/update.png</iconset>
+   </property>
+   <property name="text">
+    <string>Check update</string>
    </property>
   </action>
  </widget>

@@ -61,7 +61,7 @@ void SettingsDialog::on_buttonBox_clicked (QAbstractButton *button)
         reject ();
         break;
     default:
-        reject ();
+        ;
     }
 }
 

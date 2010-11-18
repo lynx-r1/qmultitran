@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Settings</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="qmultitran.qrc">
+    <normaloff>:/icons/multitran_logo.png</normaloff>:/icons/multitran_logo.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QTabWidget" name="tabWidget">
@@ -149,6 +153,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="qmultitran.qrc"/>
+ </resources>
  <connections/>
 </ui>

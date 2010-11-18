@@ -24,4 +24,7 @@ RESOURCES += \
     qmultitran.qrc
 
 OTHER_FILES += \
-    qmultitran.conf
+    COPYING \
+    GPLHEADER \
+    README \
+    TODO
