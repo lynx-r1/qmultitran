@@ -15,15 +15,20 @@ SOURCES += main.cpp\
     settingsdialog.cpp
 
 HEADERS  += mainwindow.h \
-    settingsdialog.h
+    settingsdialog.h \
+    constants.h
 
 FORMS    += mainwindow.ui \
     settingsdialog.ui
 
 RESOURCES += \
-    qmultitran.qrc
+    locale/locale.qrc \
+    icons/icons.qrc
 
-OTHER_FILES += \
+TRANSLATIONS = \
+    locale/ru_RU.ts
+
+OTHER_FILES = \
     COPYING \
     GPLHEADER \
     README \

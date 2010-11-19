@@ -16,32 +16,38 @@
  * along with QMultitran.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <QtGui/QApplication>
-#include <QtGui/QSystemTrayIcon>
-#include <QtGui/QMessageBox>
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
-#include <QTextCodec>
+#include <QDialog>
 
-#include "mainwindow.h"
+QT_FORWARD_DECLARE_CLASS(QAbstractButton)
+QT_FORWARD_DECLARE_CLASS(QSettings)
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-
-    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-    QTextCodec::setCodecForTr(codec);
-    QTextCodec::setCodecForCStrings(codec);
-
-    if (QSystemTrayIcon::isSystemTrayAvailable()) {
-        QApplication::setQuitOnLastWindowClosed(false);
-    } else {
-        QMessageBox::critical(0, QObject::tr("Systray"),
-                              QObject::tr("I couldn't detect any system tray "
-                                          "on this system."));
-    }
-
-    MainWindow w;
-    w.show();
-
-    return a.exec();
+namespace Ui {
+    class SettingsDialog;
 }
+
+class SettingsDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit SettingsDialog(QWidget *parent = 0);
+    ~SettingsDialog();
+
+private slots:
+    void on_buttonBox_clicked(QAbstractButton *button);
+
+    void apply();
+
+private:
+    void readSettigns();
+    void writeSettings();
+
+    Ui::SettingsDialog *ui;
+
+    QSettings *mSettings;
+};
+
+#endif // SETTINGSDIALOG_H

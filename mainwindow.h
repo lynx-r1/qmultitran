@@ -23,6 +23,11 @@
 #include <QSystemTrayIcon>
 #include <QUrl>
 
+#include "constants.h"
+
+using namespace Constants;
+
+QT_FORWARD_DECLARE_CLASS(QSettings)
 QT_FORWARD_DECLARE_CLASS(QStringListModel)
 QT_FORWARD_DECLARE_CLASS(QWebView)
 
@@ -84,8 +89,9 @@ private:
 
     QWebView *mWebView;
 
+    QSettings *mSettings;
     QStringListModel *mWordDictModel;
-    QSystemTrayIcon *mTrayIcon;
+    QSystemTrayIcon *mSystemTrayIcon;
 
     QUrl mTranslationUrl;
     QStringList mWordDictList;

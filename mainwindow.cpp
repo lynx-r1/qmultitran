@@ -42,9 +42,9 @@
 
 int MESSAGE_TIMEOUT = 3000;
 
-QString CACHE_DIR = "cache";
-QString MULTITRAN_URL = "http://multitran.ru";
-QString MULTITRAN_EXE = "http://multitran.ru/c/m.exe";
+const QString CACHE_DIR = "cache";
+const QString MULTITRAN_URL = "http://multitran.ru";
+const QString MULTITRAN_EXE = "http://multitran.ru/c/m.exe";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mWebView = new QWebView;
     mTranslationUrl.setUrl (MULTITRAN_EXE);
+    mSettings = new QSettings(APP_NAME, APP_NAME);
 
     configWebViewTranslation ();
 
@@ -71,16 +72,20 @@ MainWindow::~MainWindow()
 {
     writeSettigns ();
 
+    delete mSettings;
     delete mWebView;
     delete ui;
 }
 
 // ----------------------------- public slots ------------------------------- //
-void MainWindow::closeEvent (QCloseEvent *event)
+void MainWindow::closeEvent (QCloseEvent *e)
 {
-    if (mTrayIcon->isVisible ()) {
-        hide();
-        event->ignore();
+    if (mSystemTrayIcon->isVisible ()) {
+        hide ();
+        e->ignore ();
+    } else {
+        QMainWindow::closeEvent (e);
+        qApp->exit ();
     }
 }
 
@@ -96,7 +101,12 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         query.append (qMakePair(QString("l1"), QString("1")));
         mTranslationUrl.setQueryItems (query);
 
-        statusBar ()->showMessage (tr("Loading from web..."));
+        QNetworkProxy proxy = QNetworkProxy::applicationProxy ();
+        if (!proxy.hostName ().isEmpty ()) {
+            statusBar ()->showMessage (tr("Loading from web via proxy..."));
+        } else {
+            statusBar ()->showMessage (tr("Loading from web..."));
+        }
         mWebView->load (mTranslationUrl);
     } else {
         QFileInfo info(cacheFileName);
@@ -108,13 +118,13 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
 void MainWindow::on_actionCheckUpdate_triggered ()
 {
     if (checkUpdate ()) {
-        mTrayIcon->showMessage (tr("Update"), tr("Available new version."));
+        mSystemTrayIcon->showMessage (tr("Update"), tr("Available new version."));
     }
 }
 
 void MainWindow::on_actionSettings_triggered ()
 {
-    SettingsDialog settings;
+    SettingsDialog settings(this);
     settings.exec ();
 }
 
@@ -132,6 +142,9 @@ void MainWindow::on_actionClearCache_triggered ()
             d.remove (fileName);
         }
 
+        ui->actionBack->setEnabled (false);
+        ui->actionForward->setEnabled (false);
+
         statusBar ()->showMessage (tr("Cache cleaned"), MESSAGE_TIMEOUT);
     } else {
         statusBar ()->showMessage (tr("Canceled"), MESSAGE_TIMEOUT);
@@ -140,7 +153,7 @@ void MainWindow::on_actionClearCache_triggered ()
 
 void MainWindow::on_actionAbout_triggered ()
 {
-    QString text = tr("This program is a simple frontend for online version "
+    QString text = tr("QMultitran is a simple frontend for online version "
                       "of the dictionary Multitran (<a href='http://multitran.ru'>"
                       "http://multitran.ru</a>).");
     QMessageBox::about (this, tr("About"), text);
@@ -153,9 +166,7 @@ void MainWindow::on_actionExit_triggered ()
 
 void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
 {
-    qDebug () << url;
     QWebHistory *history = ui->webViewTranslation->history ();
-    qDebug () << history->items ().count ();
 
     int iMaxItems = 100;
     bool bAllowBack = (history->backItems (iMaxItems).count() != 0);
@@ -274,19 +285,18 @@ void MainWindow::parseTranslationPage (bool ok)
 // ------------------------------ private ---------------------------------- //
 void MainWindow::readSettings ()
 {
-    QSettings s;
-
-    bool bUseProxy = s.value ("QMultitran/UseProxy", false).toBool ();
+    mSettings->beginGroup ("Proxy");
+    bool bUseProxy = mSettings->value ("UseProxy", false).toBool ();
 
     if (bUseProxy) {
-        QString hostName = s.value ("/QMultitran/ProxyHost").toString ();
-        int port = s.value ("/QMultitran/ProxyPort").toInt ();
-        QString userName = s.value ("/QMultitran/UserName").toString ();
-        QString password = s.value ("/QMultitran/Password").toString ();
+        QString hostName = mSettings->value ("ProxyHost").toString ();
+        int port = mSettings->value ("ProxyPort").toInt ();
+        QString userName = mSettings->value ("UserName").toString ();
+        QString password = mSettings->value ("Password").toString ();
 
         QNetworkProxy proxy(QNetworkProxy::HttpProxy, hostName, port);
 
-        bool bUseAuthentication = s.value ("/QMultitran/UseAuthentication", false).toBool ();
+        bool bUseAuthentication = mSettings->value ("UseAuthentication", false).toBool ();
         if (bUseAuthentication) {
             proxy.setUser (userName);
             proxy.setPassword (password);
@@ -294,14 +304,15 @@ void MainWindow::readSettings ()
 
         QNetworkProxy::setApplicationProxy(proxy);
     }
+    mSettings->endGroup ();
 
-    setGeometry (s.value ("/QMultitran/Geometry", QRect(0, 0, 570, 380)).toRect ());
+    setGeometry (mSettings->value ("QMultitran/Geometry", QRect(0, 0, 570, 380)).toRect ());
+    mSystemTrayIcon->setVisible (mSettings->value ("SystemTray/ShowSystemTray", true).toBool ());
 }
 
 void MainWindow::writeSettigns ()
 {
-    QSettings s;
-    s.setValue ("/QMultitran/Geometry", geometry ());
+    mSettings->setValue ("QMultitran/Geometry", geometry ());
 }
 
 void MainWindow::configWebViewTranslation ()
@@ -334,9 +345,8 @@ void MainWindow::createTrayIcon ()
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(ui->actionExit);
 
-    mTrayIcon = new QSystemTrayIcon(QPixmap(":/icons/multitran_logo.png"), this);
-    mTrayIcon->setContextMenu(trayIconMenu);
-    mTrayIcon->show ();
+    mSystemTrayIcon = new QSystemTrayIcon(QPixmap(APP_ICON), this);
+    mSystemTrayIcon->setContextMenu(trayIconMenu);
 }
 
 void MainWindow::createConnections ()
@@ -346,9 +356,9 @@ void MainWindow::createConnections ()
     connect (mWebView, SIGNAL(loadFinished(bool)),
              this, SLOT(parseTranslationPage(bool)));
 
-    connect (mTrayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
+    connect (mSystemTrayIcon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
              this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
-    connect (mTrayIcon, SIGNAL(messageClicked()),
+    connect (mSystemTrayIcon, SIGNAL(messageClicked()),
              this, SLOT(iconMessageClicked()));
 
     connect (ui->actionForward, SIGNAL(triggered()),
