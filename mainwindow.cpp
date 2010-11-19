@@ -40,7 +40,7 @@
 #include "settingsdialog.h"
 #include "ui_mainwindow.h"
 
-int MESSAGE_TIMEOUT = 3000;
+const int MESSAGE_TIMEOUT = 3000;
 
 const QString CACHE_DIR = "cache";
 const QString MULTITRAN_URL = "http://multitran.ru";
@@ -334,13 +334,14 @@ void MainWindow::createCompleter ()
     completer->setCaseSensitivity (Qt::CaseInsensitive);
     completer->setModelSorting (QCompleter::CaseSensitivelySortedModel);
     completer->setCompletionMode (QCompleter::InlineCompletion);
+
     ui->lineEditTranslate->setCompleter (completer);
 }
 
 void MainWindow::createTrayIcon ()
 {
     QMenu *trayIconMenu = new QMenu(this);
-    trayIconMenu->addAction(ui->actionCheckUpdate);
+//    trayIconMenu->addAction(ui->actionCheckUpdate);
     trayIconMenu->addAction(ui->actionAbout);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(ui->actionExit);
