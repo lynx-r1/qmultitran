@@ -33,8 +33,10 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->comboBoxLocale->addItem (tr("English"), QString("en_US"));
-    ui->comboBoxLocale->addItem (tr("Russian"), QString("ru_RU"));
+    ui->comboBoxLocale->addItem (QPixmap(":/icons/flags/united_kingdom.png"),
+                                 tr("English"), QString("en_GB"));
+    ui->comboBoxLocale->addItem (QPixmap(":/icons/flags/russia.png"),
+                                 tr("Russian"), QString("ru_RU"));
 
     mSettings = new QSettings(APP_NAME, APP_NAME);
 
