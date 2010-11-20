@@ -100,12 +100,8 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
     if (!QFile::exists (cacheFileName)) {
         QString lgID = ui->comboBoxLanguage->itemData (ui->comboBoxLanguage->currentIndex ())
                        .toStringList ().at (0);
-
-//        QTextCodec *wincodec = QTextCodec::codecForName ("Windows-1251");
-//        QString percentEncWord = wincodec->fromUnicode (word);
-//        qDebug () << percentEncWord;
-
         QList<QPair<QString, QString> > query;
+
         query.append (qMakePair(QString("CL"), QString("1")));
         query.append (qMakePair(QString("s"), word));
         query.append (qMakePair(QString("l1"), lgID));
@@ -118,7 +114,6 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
             statusBar ()->showMessage (tr("Loading from web..."));
         }
 
-        qDebug () << mTranslationUrl.toString ();
         ui->stackedWidgetProgrLang->setCurrentIndex (ProgressBarLoad);
         mWebView->load (mTranslationUrl);
     } else {
@@ -210,7 +205,6 @@ void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
     ui->actionForward->setEnabled (bAllowForward);
 
     QString filePath = url.path ();
-    qDebug () << filePath;
 
     if (filePath != "blank") {
         QString word = getWordFromPath (filePath);
@@ -279,7 +273,6 @@ void MainWindow::parseTranslationPage (bool ok)
         QWebFrame *frame = mWebView->page ()->mainFrame ();
         QWebElement document = frame->documentElement ();
         QWebElementCollection tables = document.findAll ("table");
-        qDebug () << tables.count ();
 
         if (tables.count () == 11) {
             QWebElement translateTable = tables.at (TranslationTable);
@@ -471,7 +464,6 @@ QString MainWindow::cachePageName (const QString &word)
 {
     QString lgNM = ui->comboBoxLanguage->itemData (ui->comboBoxLanguage->currentIndex ())
                    .toStringList ().at (1);
-    qDebug () << lgNM;
     QString str = QString("%1%2%3_%4.html").arg (CACHE_DIR)
                   .arg (QDir::separator ()).arg (word).arg (lgNM);
     return str;
