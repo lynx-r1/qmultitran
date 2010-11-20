@@ -42,22 +42,21 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain(APP_URL);
 
     // Check for saved transelation and use it or use the system default
+    QString locale;
     QTranslator translator;
     QSettings settings(APP_NAME, APP_NAME);
     bool bOverrideSystemLocale = settings.value ("Locale/OverrideLocale").toBool ();
     if (bOverrideSystemLocale) {
-        QString locale = settings.value("Locale/Locale").toString();
-        if (locale.isEmpty()) {
-            locale = QLocale::system().name();
-            settings.setValue("Settings/Locale", locale);
-        }
+        locale = settings.value("Locale/Locale", "en_GB").toString();
+    } else {
+        locale = QLocale::system().name();
+    }
 
-        if (translator.load(":/locale/" + locale)) {
-            qDebug("%s locale recognized, using translation.", qPrintable(locale));
-        } else {
-            qDebug("%s locale unrecognized, using default (en_GB).", qPrintable(locale));
-        }
+    if (translator.load(":/locale/" + locale)) {
+        qDebug("%s locale recognized, using translation.", qPrintable(locale));
         app.installTranslator(&translator);
+    } else {
+        qDebug("%s locale unrecognized, using default (en_GB).", qPrintable(locale));
     }
 
     if (QSystemTrayIcon::isSystemTrayAvailable()) {
