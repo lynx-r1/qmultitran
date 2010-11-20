@@ -19,6 +19,7 @@
 #include <QCompleter>
 #include <QCloseEvent>
 #include <QDesktopServices>
+#include <QDesktopWidget>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -347,7 +348,9 @@ void MainWindow::readSettings ()
     }
     mSettings->endGroup ();
 
-    setGeometry (mSettings->value ("QMultitran/Geometry", QRect(0, 40, 570, 380)).toRect ());
+    QDesktopWidget *desktop = qApp->desktop ();
+    QRect center = QRect(desktop->width () / 2 - 285, desktop->height () / 2 - 190, 570, 380);
+    setGeometry (mSettings->value ("QMultitran/Geometry", center).toRect ());
     ui->comboBoxLanguage->setCurrentIndex (mSettings->value ("QMultitran/TranslateLanguage", 0).toInt ());
     mSystemTrayIcon->setVisible (mSettings->value ("SystemTray/ShowSystemTray", true).toBool ());
 }
