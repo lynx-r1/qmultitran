@@ -182,9 +182,10 @@ void MainWindow::on_actionClearCache_triggered ()
 
 void MainWindow::on_actionAbout_triggered ()
 {
-    QString text = tr("QMultitran is a simple frontend for online version "
+    QString text = tr("<b>QMultitran (%1)</b><br /><br />"
+                      "QMultitran is a simple frontend for online version "
                       "of the dictionary Multitran (<a href='http://multitran.ru'>"
-                      "http://multitran.ru</a>).");
+                      "http://multitran.ru</a>).").arg (APP_VERSION);
     QMessageBox::about (this, tr("About"), text);
 }
 

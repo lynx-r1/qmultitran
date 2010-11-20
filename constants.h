@@ -3,7 +3,7 @@
 
 namespace Constants {
     const char * const APP_NAME = "QMultitran";
-    const char * const APP_VERSION = "0.0.1";
+    const char * const APP_VERSION = "0.2.0";
     const char * const APP_ICON = ":/icons/multitran_logo.png";
     const char * const APP_URL = "http://multitran.ru/";
     const char * const APP_AUTHOR = "The QMultitran";

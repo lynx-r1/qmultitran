@@ -25,7 +25,7 @@
     </message>
     <message>
         <location filename="../mainwindow.ui" line="156"/>
-        <location filename="../mainwindow.cpp" line="193"/>
+        <location filename="../mainwindow.cpp" line="189"/>
         <source>About</source>
         <translation>О программе</translation>
     </message>
@@ -50,32 +50,32 @@
         <translation>Проверить обновления</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="116"/>
+        <location filename="../mainwindow.cpp" line="112"/>
         <source>Loading from web via proxy...</source>
         <translation>Загрузка из интернета через прокси...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="118"/>
+        <location filename="../mainwindow.cpp" line="114"/>
         <source>Loading from web...</source>
         <translation>Загрузка из интернета...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="126"/>
+        <location filename="../mainwindow.cpp" line="121"/>
         <source>Loading from cache...</source>
         <translation>Загрузка из кэша...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="151"/>
+        <location filename="../mainwindow.cpp" line="146"/>
         <source>Update</source>
         <translation>Обновить</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="151"/>
+        <location filename="../mainwindow.cpp" line="146"/>
         <source>Available new version.</source>
         <translation>Доступна новая версия.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="163"/>
+        <location filename="../mainwindow.cpp" line="158"/>
         <source>Warning</source>
         <translation>Предупреждение</translation>
     </message>
@@ -84,109 +84,113 @@
         <translation type="obsolete">Вы действительно хотите удалить все локально сохранённые слова?</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="164"/>
+        <location filename="../mainwindow.cpp" line="159"/>
         <source>Are you really want to delete all localy saved translations?</source>
         <translation>Вы действительно хотите удалить все локально сохранённые переводы?</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="182"/>
+        <location filename="../mainwindow.cpp" line="177"/>
         <source>Cache cleaned</source>
         <translation>Кэш очищен</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="184"/>
+        <location filename="../mainwindow.cpp" line="179"/>
         <source>Canceled</source>
         <translation>Отменено</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="190"/>
         <source>QMultitran is a simple frontend for online version of the dictionary Multitran (&lt;a href=&apos;http://multitran.ru&apos;&gt;http://multitran.ru&lt;/a&gt;).</source>
         <oldsource>This program is a simple frontend for online version of the dictionary Multitran (&lt;a href=&apos;http://multitran.ru&apos;&gt;http://multitran.ru&lt;/a&gt;).</oldsource>
-        <translation>QMultitran простой фронтэнд для онлайн версии словаря Multitran (&lt;a href=&apos;http://multitran.ru&apos;&gt;http://multitran.ru&lt;/a&gt;).</translation>
+        <translation type="obsolete">QMultitran простой фронтэнд для онлайн версии словаря Multitran (&lt;a href=&apos;http://multitran.ru&apos;&gt;http://multitran.ru&lt;/a&gt;).</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="269"/>
-        <location filename="../mainwindow.cpp" line="310"/>
+        <location filename="../mainwindow.cpp" line="185"/>
+        <source>&lt;b&gt;QMultitran (%1)&lt;/b&gt;&lt;br /&gt;&lt;br /&gt;QMultitran is a simple frontend for online version of the dictionary Multitran (&lt;a href=&apos;http://multitran.ru&apos;&gt;http://multitran.ru&lt;/a&gt;).</source>
+        <translation>&lt;b&gt;QMultitran (%1)&lt;/b&gt;&lt;br /&gt;&lt;br /&gt;QMultitran простой фронтэнд для онлайн версии словаря Multitran (&lt;a href=&apos;http://multitran.ru&apos;&gt;http://multitran.ru&lt;/a&gt;).</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="264"/>
+        <location filename="../mainwindow.cpp" line="304"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="269"/>
+        <location filename="../mainwindow.cpp" line="264"/>
         <source>Unable to load page</source>
         <translation>Неудалось загрузить страницу</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="308"/>
+        <location filename="../mainwindow.cpp" line="302"/>
         <source>Word saved in cache</source>
         <translation>Слово сохранено в кэше</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="310"/>
+        <location filename="../mainwindow.cpp" line="304"/>
         <source>Unable to open file %1 for writing</source>
         <translation>Неудалось открыть файл %1 для записи</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="326"/>
+        <location filename="../mainwindow.cpp" line="320"/>
         <source>Translation page did not found</source>
         <translation>Страница перевода не найдена</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="377"/>
+        <location filename="../mainwindow.cpp" line="371"/>
         <source>English</source>
         <translation>Английский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="379"/>
+        <location filename="../mainwindow.cpp" line="373"/>
         <source>German</source>
         <translation>Немецкий</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="381"/>
+        <location filename="../mainwindow.cpp" line="375"/>
         <source>French</source>
         <translation>Французкий</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="383"/>
+        <location filename="../mainwindow.cpp" line="377"/>
         <source>Spanish</source>
         <translation>Испанский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="385"/>
+        <location filename="../mainwindow.cpp" line="379"/>
         <source>Italian</source>
         <translation>Итальянский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="387"/>
+        <location filename="../mainwindow.cpp" line="381"/>
         <source>Dutch</source>
         <translation>Нидерландский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="389"/>
+        <location filename="../mainwindow.cpp" line="383"/>
         <source>Latvian</source>
         <translation>Латышский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="391"/>
+        <location filename="../mainwindow.cpp" line="385"/>
         <source>Estonian</source>
         <translation>Эстонский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="393"/>
+        <location filename="../mainwindow.cpp" line="387"/>
         <source>Japanese</source>
         <translation>Японский</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="395"/>
+        <location filename="../mainwindow.cpp" line="389"/>
         <source>Afrikaans</source>
         <translation>Африкаанс</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="397"/>
+        <location filename="../mainwindow.cpp" line="391"/>
         <source>Esperanto</source>
         <translation>Эсперанто</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="399"/>
+        <location filename="../mainwindow.cpp" line="393"/>
         <source>Kalmyk</source>
         <translation>Калмыцкий</translation>
     </message>
