@@ -48,6 +48,9 @@ public slots:
 
 private slots:
     void on_lineEditTranslate_returnPressed ();
+    void on_comboBoxLanguage_currentIndexChanged(int index);
+    void on_toolButtonCancelLoad_clicked();
+    void on_pushButtonMultitranLogo_clicked();
 
     void on_actionCheckUpdate_triggered();
     void on_actionSettings_triggered();
@@ -70,6 +73,8 @@ private:
 
     void configWebViewTranslation();
 
+    void fillComboBoxLanguage();
+
     void createWordDictModel();
     void createCompleter();
     void createTrayIcon();
@@ -77,6 +82,7 @@ private:
     void createCacheDir();
 
     bool checkUpdate();
+    bool isCacheEmpty();
 
     QString cachePageName(const QString &filePath);
     QStringList loadDict();
@@ -84,6 +90,10 @@ private:
     QString getWordFromPath(const QString &path);
     QString fileNameToWord(const QString &fileName);
 
+    enum StackWidget {
+        ProgressBarLoad,
+        ComboBoxLanguage
+    };
 
     Ui::MainWindow *ui;
 

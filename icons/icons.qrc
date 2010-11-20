@@ -11,5 +11,17 @@
         <file>update.png</file>
         <file>flags/russia.png</file>
         <file>flags/united_kingdom.png</file>
+        <file>flags/germany.png</file>
+        <file>flags/france.png</file>
+        <file>flags/spain.png</file>
+        <file>flags/italy.png</file>
+        <file>flags/netherlands.png</file>
+        <file>flags/japan.png</file>
+        <file>flags/esperanto.png</file>
+        <file>flags/latvia.png</file>
+        <file>flags/estonia.png</file>
+        <file>flags/kalmykia.png</file>
+        <file>flags/south_africa.png</file>
+        <file>cancel.png</file>
     </qresource>
 </RCC>

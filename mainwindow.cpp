@@ -45,6 +45,7 @@ const int MESSAGE_TIMEOUT = 3000;
 const QString CACHE_DIR = "cache";
 const QString MULTITRAN_URL = "http://multitran.ru";
 const QString MULTITRAN_EXE = "http://multitran.ru/c/m.exe";
+const QString TRANSL_NOT_FOUND = "<html><head></head>Translation page did not found.<body></body></html>";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -57,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mSettings = new QSettings(APP_NAME, APP_NAME);
 
     configWebViewTranslation ();
+    fillComboBoxLanguage ();
 
     createWordDictModel ();
     createCompleter ();
@@ -89,16 +91,24 @@ void MainWindow::closeEvent (QCloseEvent *e)
     }
 }
 
+#include <QTextCodec>
 // --------------------------- private slots -------------------------------- //
 void MainWindow::on_lineEditTranslate_returnPressed ()
 {
     QString word = ui->lineEditTranslate->text ();
     QString cacheFileName = cachePageName (word);
     if (!QFile::exists (cacheFileName)) {
+        QString lgID = ui->comboBoxLanguage->itemData (ui->comboBoxLanguage->currentIndex ())
+                       .toStringList ().at (0);
+
+//        QTextCodec *wincodec = QTextCodec::codecForName ("Windows-1251");
+//        QString percentEncWord = wincodec->fromUnicode (word);
+//        qDebug () << percentEncWord;
+
         QList<QPair<QString, QString> > query;
         query.append (qMakePair(QString("CL"), QString("1")));
-        query.append (qMakePair(QString("s"), ui->lineEditTranslate->text ()));
-        query.append (qMakePair(QString("l1"), QString("1")));
+        query.append (qMakePair(QString("s"), word));
+        query.append (qMakePair(QString("l1"), lgID));
         mTranslationUrl.setQueryItems (query);
 
         QNetworkProxy proxy = QNetworkProxy::applicationProxy ();
@@ -107,12 +117,32 @@ void MainWindow::on_lineEditTranslate_returnPressed ()
         } else {
             statusBar ()->showMessage (tr("Loading from web..."));
         }
+
+        qDebug () << mTranslationUrl.toString ();
+        ui->stackedWidgetProgrLang->setCurrentIndex (ProgressBarLoad);
         mWebView->load (mTranslationUrl);
     } else {
         QFileInfo info(cacheFileName);
         statusBar ()->showMessage (tr("Loading from cache..."));
         mWebView->load (info.absoluteFilePath ());
     }
+}
+
+void MainWindow::on_comboBoxLanguage_currentIndexChanged (int index)
+{
+    Q_UNUSED(index);
+    ui->lineEditTranslate->setFocus ();
+}
+
+void MainWindow::on_toolButtonCancelLoad_clicked ()
+{
+    mWebView->stop ();
+    ui->stackedWidgetProgrLang->setCurrentIndex (ComboBoxLanguage);
+}
+
+void MainWindow::on_pushButtonMultitranLogo_clicked ()
+{
+    QDesktopServices::openUrl (MULTITRAN_URL);
 }
 
 void MainWindow::on_actionCheckUpdate_triggered ()
@@ -132,7 +162,7 @@ void MainWindow::on_actionClearCache_triggered ()
 {
     QMessageBox::StandardButton a = QMessageBox::question (this, tr("Warning"),
                                                            tr("Are you really want to delete "
-                                                              "all localy saved words?"),
+                                                              "all localy saved translations?"),
                                                            QMessageBox::Yes | QMessageBox::No,
                                                            QMessageBox::No);
     if (a == QMessageBox::Yes) {
@@ -145,6 +175,10 @@ void MainWindow::on_actionClearCache_triggered ()
         ui->actionBack->setEnabled (false);
         ui->actionForward->setEnabled (false);
 
+        mWordDictList.clear ();;
+        mWordDictModel->setStringList (mWordDictList);
+
+        ui->actionClearCache->setEnabled (false);
         statusBar ()->showMessage (tr("Cache cleaned"), MESSAGE_TIMEOUT);
     } else {
         statusBar ()->showMessage (tr("Canceled"), MESSAGE_TIMEOUT);
@@ -176,6 +210,7 @@ void MainWindow::on_webViewTranslation_urlChanged (const QUrl &url)
     ui->actionForward->setEnabled (bAllowForward);
 
     QString filePath = url.path ();
+    qDebug () << filePath;
 
     if (filePath != "blank") {
         QString word = getWordFromPath (filePath);
@@ -208,7 +243,7 @@ void MainWindow::on_webViewTranslation_linkClicked (const QUrl &url)
 
 void MainWindow::loading (int progress)
 {
-    ui->progressBar->setValue (progress);
+    ui->progressBarLoad->setValue (progress);
 }
 
 void MainWindow::iconActivated (QSystemTrayIcon::ActivationReason reason)
@@ -244,42 +279,54 @@ void MainWindow::parseTranslationPage (bool ok)
         QWebFrame *frame = mWebView->page ()->mainFrame ();
         QWebElement document = frame->documentElement ();
         QWebElementCollection tables = document.findAll ("table");
+        qDebug () << tables.count ();
 
-        QWebElement translateTable = tables.at (TranslationTable);
-        QWebElementCollection imgs = translateTable.findAll ("img");
-        foreach (QWebElement i, imgs) {
-            QString imgVal = i.attribute ("src");
-            if (!imgVal.isEmpty ()) {
-                i.setAttribute ("src", QString("%1/%2").arg (MULTITRAN_URL)
-                                .arg (imgVal));
+        if (tables.count () == 11) {
+            QWebElement translateTable = tables.at (TranslationTable);
+            QWebElementCollection imgs = translateTable.findAll ("img");
+            foreach (QWebElement i, imgs) {
+                QString imgVal = i.attribute ("src");
+                if (!imgVal.isEmpty ()) {
+                    i.setAttribute ("src", QString("%1/%2").arg (MULTITRAN_URL)
+                                    .arg (imgVal));
+                }
             }
-        }
 
-        QString tableXml = translateTable.toOuterXml ();
-        tableXml.replace ("m.exe", MULTITRAN_EXE);
+            QString tableXml = translateTable.toOuterXml ();
+            tableXml.replace ("m.exe", MULTITRAN_EXE);
 
-        QFile cacheFile(filePath);
-        if (cacheFile.open (QIODevice::WriteOnly)) {
-            QString html = QString("<html><head></head><body>%1"
-                                   "</body></html>").arg (tableXml);
-            QTextStream out(&cacheFile);
-            out.setCodec ("UTF-8");
-            out << html;
+            QFile cacheFile(filePath);
+            if (cacheFile.open (QIODevice::WriteOnly)) {
+                QString html = QString("<html><head></head><body>%1"
+                                       "</body></html>").arg (tableXml);
+                QTextStream out(&cacheFile);
+                out.setCodec ("UTF-8");
+                out << html;
 
-            mWordDictList.append (word);
-            mWordDictModel->setStringList (mWordDictList);
-            statusBar ()->showMessage (tr("Word saved in cache"));
+                mWordDictList.append (word);
+                mWordDictModel->setStringList (mWordDictList);
+                statusBar ()->showMessage (tr("Word saved in cache"));
+            } else {
+                QMessageBox::information (this, tr("Error"), tr("Unable to open file %1 for writing")
+                                          .arg (filePath));
+                return;
+            }
         } else {
-            QMessageBox::information (this, tr("Error"), tr("Unable to open file %1 for writing")
-                                      .arg (filePath));
-            return;
+            filePath = "";
         }
     }
 
-    QFileInfo info(filePath);
-    ui->webViewTranslation->setUrl (info.absoluteFilePath ());
+    if (!filePath.isEmpty ()) {
+        QFileInfo info(filePath);
+        ui->webViewTranslation->setUrl (info.absoluteFilePath ());
+        ui->actionClearCache->setEnabled (true);
+        statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
+    } else {
+        ui->webViewTranslation->setHtml (TRANSL_NOT_FOUND);
+        statusBar ()->showMessage (tr("Translation page did not found"));
+    }
 
-    statusBar ()->showMessage ("Done", MESSAGE_TIMEOUT);
+    ui->stackedWidgetProgrLang->setCurrentIndex (ComboBoxLanguage);
 }
 
 // ------------------------------ private ---------------------------------- //
@@ -306,13 +353,15 @@ void MainWindow::readSettings ()
     }
     mSettings->endGroup ();
 
-    setGeometry (mSettings->value ("QMultitran/Geometry", QRect(0, 0, 570, 380)).toRect ());
+    setGeometry (mSettings->value ("QMultitran/Geometry", QRect(0, 40, 570, 380)).toRect ());
+    ui->comboBoxLanguage->setCurrentIndex (mSettings->value ("QMultitran/TranslateLanguage", 0).toInt ());
     mSystemTrayIcon->setVisible (mSettings->value ("SystemTray/ShowSystemTray", true).toBool ());
 }
 
 void MainWindow::writeSettigns ()
 {
     mSettings->setValue ("QMultitran/Geometry", geometry ());
+    mSettings->setValue ("QMultitran/TranslateLanguage", ui->comboBoxLanguage->currentIndex ());
 }
 
 void MainWindow::configWebViewTranslation ()
@@ -320,6 +369,34 @@ void MainWindow::configWebViewTranslation ()
     ui->webViewTranslation->settings ()->setDefaultTextEncoding ("UTF-8");
     ui->webViewTranslation->settings ()->setAttribute (QWebSettings::JavascriptEnabled, false);
     ui->webViewTranslation->page ()->setLinkDelegationPolicy (QWebPage::DelegateAllLinks);
+}
+
+void MainWindow::fillComboBoxLanguage ()
+{
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/united_kingdom.png"),
+                                   tr("English"), QStringList() << "1" << "en_GB");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/germany.png"),
+                                   tr("German"), QStringList() << "3" << "de_DE");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/france.png"),
+                                   tr("French"), QStringList() << "4" << "fr_FR");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/spain.png"),
+                                   tr("Spanish"), QStringList() << "5" << "es_ES");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/italy.png"),
+                                   tr("Italian"), QStringList() << "23" << "it_IT");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/netherlands.png"),
+                                   tr("Dutch"), QStringList() << "24" << "nl_NL");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/latvia.png"),
+                                   tr("Latvian"), QStringList() << "27" << "lv_LV");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/estonia.png"),
+                                   tr("Estonian"), QStringList() << "26" << "et_EE");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/japan.png"),
+                                   tr("Japanese"), QStringList() << "28" << "ja_JP");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/south_africa.png"),
+                                   tr("Afrikaans"), QStringList() << "31" << "af_ZA");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/esperanto.png"),
+                                   tr("Esperanto"), QStringList() << "34" << "en_US");
+    ui->comboBoxLanguage->addItem (QPixmap(":/icons/flags/kalmykia.png"),
+                                   tr("Kalmyk"), QStringList() << "35" << "km_RU");
 }
 
 void MainWindow::createWordDictModel ()
@@ -374,6 +451,8 @@ void MainWindow::createCacheDir ()
         QDir d = QDir::currentPath ();
         d.mkdir (CACHE_DIR);
     }
+
+    ui->actionClearCache->setEnabled (!isCacheEmpty ());
 }
 
 bool MainWindow::checkUpdate ()
@@ -381,10 +460,20 @@ bool MainWindow::checkUpdate ()
     return true;
 }
 
+bool MainWindow::isCacheEmpty ()
+{
+    QDir d(CACHE_DIR);
+    QStringList files = d.entryList (QStringList() << "*.html");
+    return files.count () == 0;
+}
+
 QString MainWindow::cachePageName (const QString &word)
 {
-    QString str = QString("%1%2%3.html").arg (CACHE_DIR)
-                  .arg (QDir::separator ()).arg (word);
+    QString lgNM = ui->comboBoxLanguage->itemData (ui->comboBoxLanguage->currentIndex ())
+                   .toStringList ().at (1);
+    qDebug () << lgNM;
+    QString str = QString("%1%2%3_%4.html").arg (CACHE_DIR)
+                  .arg (QDir::separator ()).arg (word).arg (lgNM);
     return str;
 }
 
@@ -412,6 +501,6 @@ QString MainWindow::getWordFromPath (const QString &path)
 QString MainWindow::fileNameToWord (const QString &fileName)
 {
     QString fn = fileName;
-    fn.chop (5);
+    fn.chop (11);
     return fn;
 }

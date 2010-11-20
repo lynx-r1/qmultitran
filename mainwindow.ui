@@ -14,11 +14,11 @@
    <string>QMultitran</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="qmultitran.qrc">
+   <iconset resource="icons/icons.qrc">
     <normaloff>:/icons/multitran_logo.png</normaloff>:/icons/multitran_logo.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
@@ -29,26 +29,72 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="labelMultitranIcon">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
+       <widget class="QPushButton" name="pushButtonMultitranLogo">
         <property name="text">
          <string/>
         </property>
-        <property name="pixmap">
-         <pixmap resource="qmultitran.qrc">:/icons/multitran.png</pixmap>
+        <property name="icon">
+         <iconset resource="icons/icons.qrc">
+          <normaloff>:/icons/multitran.png</normaloff>:/icons/multitran.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>107</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QProgressBar" name="progressBar">
-        <property name="value">
-         <number>0</number>
+       <widget class="QStackedWidget" name="stackedWidgetProgrLang">
+        <property name="currentIndex">
+         <number>1</number>
         </property>
+        <widget class="QWidget" name="pageProgress">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QProgressBar" name="progressBarLoad">
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="toolButtonCancelLoad">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="icons/icons.qrc">
+              <normaloff>:/icons/cancel.png</normaloff>:/icons/cancel.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pageLanguage">
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QComboBox" name="comboBoxLanguage">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
      </layout>
@@ -85,7 +131,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionClearCache">
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/clear_cache.png</normaloff>:/icons/clear_cache.png</iconset>
    </property>
    <property name="text">
@@ -94,7 +140,7 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/application-exit.png</normaloff>:/icons/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -103,7 +149,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/help-about.png</normaloff>:/icons/help-about.png</iconset>
    </property>
    <property name="text">
@@ -115,7 +161,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/back.png</normaloff>:/icons/back.png</iconset>
    </property>
    <property name="text">
@@ -127,7 +173,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/forward.png</normaloff>:/icons/forward.png</iconset>
    </property>
    <property name="text">
@@ -136,7 +182,7 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
    </property>
    <property name="text">
@@ -145,7 +191,7 @@
   </action>
   <action name="actionCheckUpdate">
    <property name="icon">
-    <iconset resource="qmultitran.qrc">
+    <iconset resource="icons/icons.qrc">
      <normaloff>:/icons/update.png</normaloff>:/icons/update.png</iconset>
    </property>
    <property name="text">
@@ -162,7 +208,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="qmultitran.qrc"/>
+  <include location="icons/icons.qrc"/>
  </resources>
  <connections/>
 </ui>
