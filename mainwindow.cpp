@@ -270,13 +270,14 @@ void MainWindow::parseTranslationPage (bool ok)
     QString word = ui->lineEditTranslate->text ();
     QString filePath(cachePageName (word));
     if (!QFile::exists (filePath)) {
-        const int TranslationTable = 6;
+        const int TranslationTable = 7;
 
         QWebFrame *frame = mWebView->page ()->mainFrame ();
         QWebElement document = frame->documentElement ();
         QWebElementCollection tables = document.findAll ("table");
 
-        if (tables.count () == 11) {
+        qDebug () << tables.count ();
+        if (tables.count () == 12) {
             QWebElement translateTable = tables.at (TranslationTable);
             QWebElementCollection imgs = translateTable.findAll ("img");
             foreach (QWebElement i, imgs) {
